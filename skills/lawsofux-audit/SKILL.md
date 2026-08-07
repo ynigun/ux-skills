@@ -26,7 +26,8 @@ You are not a human evaluator with eyes on a screen. Your failure modes are spec
 | **Issues that don't exist.** Models report problems that aren't there. | A confident finding about a control you never opened | Every finding needs a file:line or a named element. No citation → demote it, don't assert it. |
 | **Recommendations too general.** Engineers receiving machine-generated reports consistently ask *which* element and *where* — a report naming neither can't be acted on. | "The form has too many fields" | Name the field, the file, and the line. A finding that doesn't say *where* is not a finding. |
 | **Missing existing functionality.** Flagging validation, error handling, or a guard as absent when it is implemented elsewhere. | "No error handling here" when the handler is in another file | Search for the thing before declaring it absent. Each lens file's **Not a violation** section lists the specific handled cases that look like violations. |
-| **Severity labels collapse into ties.** Asked for explicit severity ratings, models return many identical ones, which defeats prioritisation. | Nine findings all marked Major | Bucket by severity, then force a **strict 1..N order**. See Deliverable. |
+| **Severity labels collapse into ties.** Asked for a severity rating in one pass, models return many identical ones, which defeats prioritisation. | Nine findings all marked Major | Rate severity in a *separate* pass, from three derived factors, averaged across runs. See Deliverable. |
+| **One wrong premise, reported five times.** A single misreading of what the user is doing reproduces itself as several separately-worded findings, inflating its own apparent weight. | Five "problems" that are all the same misunderstanding | Cluster by shared *assumption*, not just shared root cause. |
 
 Three further constraints that come from what you actually are:
 
@@ -34,6 +35,20 @@ Three further constraints that come from what you actually are:
 - **You cannot measure.** No timings, no eye-tracking, no funnel analytics. Never write "users abandon at step 3" or "this takes 2 seconds." Report the missing mechanism, not an invented metric.
 - **You cannot feel, and this is where you are most confidently wrong.** "Users will find this confusing," "this is frustrating," "this adds cognitive load" are the same class of error as a fabricated drop-off rate, and the measurements are worse: paired studies find that AI agents *consistently underestimate* human cognitive load and emotional frustration, and browser agents are explicitly unsuited to judging aesthetics or how natural a layout feels. The bias has a direction — an ungrounded agent systematically reports that the interface is fine. So when a lens here asks for the **user cost**, name the structural cause you can point at (a value the user must re-enter, an unlabelled control, a raw identifier on screen), never the feeling you imagine it produces.
 - **When the evidence isn't there, abstain — don't fill the gap.** The best-grounded persona system in this literature makes abstention its core mechanism: constrain claims to what the retrieved evidence supports, and where it doesn't exist, say so rather than generating plausible speculation. Its author's conclusion is the sharpest statement of why this matters: *"The central risk of AI personas is not inaccuracy, but implicit limitations."* A fabricated cost isn't dangerous because it's wrong — it's dangerous because it is persuasive, unverifiable, and dressed as evidence.
+
+### The one number worth memorising
+
+Benchmarked against 230,965 real recorded actions from real shopping sessions, the best prompt-only models predicted the human's actual next action **about 12% of the time**. Not "sounded plausible" — exact next action, which is the only version that matters. Whatever you are inclined to say about what a user will do next, that is the base rate.
+
+Worse, the errors are not random, and they all point the same way. Models are trained and benchmarked on *task completion*, so a model simulating a user is structurally biased toward the user succeeding. Measured against real behaviour, models:
+
+- **assume the task gets finished** — they keep going and buy, where real users closed the tab;
+- **overuse filters and advanced controls** — real users reached for search roughly seven times more often than filters;
+- **assume no retry and no error** — real users averaged nearly three searches per session, fixing typos and revising keywords, while models kept the first query.
+
+Read those three together and the conclusion is uncomfortable: **an ungrounded agent's default story is "the user succeeds, uses the sophisticated controls, and never makes a mistake" — which is precisely the story that makes a broken interface look fine.** Every one of those assumptions is a way to miss a real defect. When you catch yourself narrating a smooth path through the UI, that is the bias talking, not a finding.
+
+One corollary: **never attach a directional word to numbers you produced yourself.** A peer-reviewed paper in this very literature described simulated spending as "increasing with income" over a sequence that decreased twice. If you generate any aggregate, print the values and let them speak.
 - **You pattern-match.** A screen that resembles one with a known problem is not a screen with that problem. Open it.
 
 ### Your real problem is recall, not precision
@@ -99,28 +114,58 @@ The lenses with the highest ratio of provable findings to guesswork are [Mental 
 3. **Read the real artifact.** Central CSS + the component markup, or the rendered screenshot. Note what's actually there (groupings, confirm dialogs, focus states, soft deletes) so you don't flag handled cases.
 4. **Sweep all four groups.** For each principle you suspect, open its file, run its **Verify it from the code** checks, then read its **Not a violation** list before writing anything down.
 5. **Do a cross-screen pass.** This is the most robustly documented blind spot in the whole literature, agreed by every study that measured it: models found 43% and 50% of cross-screen violations where human panels found 86% and 83%. Each screen looks fine alone, so a per-screen sweep cannot surface these by construction. Check the set deliberately: the same concept named differently in two places, a control that changes meaning between views, inconsistent primary-action treatment, a value shown on one screen and required on another, a style that only collides when two components meet. Note that nearly all such misses fall under consistency — so if you take one thing from this step, compare naming and control behaviour across every screen. When you have screenshots, put them in navigation order and say so; sequence is what makes these visible.
-6. **Verify each suspected violation** against the exact element. If you cannot cite it, move it to **Suspected — unverified** with the check that would settle it; don't discard it silently.
-7. **Classify by severity, then rank strictly:**
-   - **Critical** — blocks or loses the user (destructive action indistinguishable from a safe one; flow abandons under Choice Overload).
-   - **Major** — measurably slower/harder (no progress indicator on a 5-step flow; Hick's overload on the primary path).
-   - **Minor** — friction or polish (label not click-associated; suboptimal button order).
-8. **Aggregate, then cluster by root cause.** First merge the duplicates your per-lens and per-screen passes inevitably produced. Then cluster what remains: three symptoms of one missing grouping = one finding with three effects, not three findings.
+6. **Repeat the sweep independently, at least three times.** This is the highest-leverage step available to you and it costs almost nothing. Model self-agreement between runs of the same audit has been measured at 31% and 57% — in the worse case, two runs of the same prompt shared *no* findings at all. In the same study, the one genuine discovery that all four human researchers missed appeared in **every** run, while two of the three outright hallucinations came from a **single** run. Run frequency is therefore a usable confidence signal, and it's the cheap analogue of the three-to-five independent evaluators that human heuristic evaluation has always required. Do not let a later pass see the earlier ones. Record for each finding how many runs produced it.
+7. **Aggregate, then cluster by root cause.** Merge the duplicates your per-lens, per-screen and multi-run passes inevitably produced. Then cluster what remains: three symptoms of one missing grouping = one finding with three effects, not three findings. Watch for the specific pathology here — a single wrong premise reproduces itself in costume. In one study, five of seven false findings traced back to *one* misreading of what the user was trying to do. Before ranking, ask of every group: do these share not just a root cause in the code, but a single assumption of mine?
+8. **Give each surviving finding a verdict**, using the three-way taxonomy from studies that checked machine-generated findings against the truth. These are not degrees of confidence; they have different remedies:
+   - **Confirmed** — you opened it, it's there, and it costs the user something.
+   - **False alarm** — a true observation misread as a problem. The element exists and you described it correctly; the *judgement* is wrong. Fixed by context, not by grounding.
+   - **Hallucination** — an element, state or behaviour that does not exist. Fixed by grounding, not by argument.
+   In the study that classified them, of the findings the model produced that no human found, roughly two-thirds were false alarms and a quarter were hallucinations. Assume the same of your own output and go looking.
+9. **Apply the tradeoff test before promoting anything to Confirmed.** A violated principle is not automatically a defect — established heuristic-evaluation practice is explicit that whether it needs fixing depends on context and on the alternatives available. A hamburger menu really does violate recognition-over-recall, and on mobile it's often still right. For every finding ask: *what would the alternative cost, and is there a low-friction recovery path?* If the answer is "the alternative is worse" or "the user recovers in one click," it's a false alarm, not a finding.
+10. **Rate severity in a separate pass, over the consolidated list.** Never during discovery — the two compete for attention, which is exactly why single-pass severity labels come out identical. See Deliverable for the scale.
 
 ## Deliverable
 
-Severity-ordered report, and **within it a strict 1..N ranking with no ties** — if two findings feel equal, decide which you would fix first and say why. Ties are the documented failure mode of LLM heuristic evaluation; forcing a total order is the fix.
+### Severity: use the established scale, and derive it
+
+Use Nielsen's 0–4 severity scale rather than inventing one. Every UX practitioner reads it fluently, and it has a property an ad-hoc scale lacks: a built-in channel for dissent.
+
+> **0** — not a usability problem at all
+> **1** — cosmetic: fix only if spare time allows
+> **2** — minor: low priority
+> **3** — major: important to fix, high priority
+> **4** — catastrophe: must be fixed before release
+
+Don't assign the number directly. Rate the three factors the scale is built from, each a narrow question you can answer from evidence, then derive:
+
+- **Frequency** — is this on the primary path or a rare branch?
+- **Impact** — if it happens, can the user recover, and how easily?
+- **Persistence** — a one-time stumble once learned, or a tax on every session?
+
+Then average across your independent runs. A mean of several 0–4 ratings is continuous, so ties mostly dissolve on their own — which is the point. **Do not force a strict 1..N order with no ties.** Earlier drafts of this skill did, on the theory that ties were the enemy; that was backwards. Ties came from single-rater, single-label severity, which established practice already rejects as unreliable. Forced pairwise ranking is separately the *worst*-performing feedback format measured in this literature — expert agreement at chance level, and models trained on it got worse, not better. Mandating an order you have no basis for is hallucinated precision, and this skill exists to suppress exactly that. Rank the top few if it helps the reader; leave the tail scored and unordered.
+
+### Report structure
+
+A polished report is more dangerous than a messy one — opacity presented in a confident format creates a false sense of precision, and that is a documented risk, not a stylistic worry. So state each finding's *evidence basis*, not just its severity, and never let formatting imply certainty the evidence doesn't carry.
 
 For each finding:
-- **Rank** + **Severity** + **Principle** (the specific one) + **proof** (`file:line` or the named element)
-- **User cost** — the concrete behavior it produces (slower, misclick, abandonment, lost work)
-- **Fix** — smallest change that removes the cost. Prefer *preventive* designs over corrective ones where both are available: disabling invalid choices beats validating them after entry.
+- **Severity** (0–4, with the three factors shown) + **Verdict** (Confirmed / False alarm / Hallucination) + **Basis** (verified in code / observed in a screenshot / inferred) + **Runs** (how many independent passes produced it) + **Principle** + **proof** (`file:line` or the named element)
+- **User cost** — the concrete behaviour it produces, named structurally, not emotionally
+- **Fix** — smallest change that removes the cost. Prefer *preventive* designs over corrective ones: disabling invalid choices beats validating them after entry.
 
-Then two closing sections that are not optional:
+Then three closing sections that are not optional:
 
-- **Suspected — unverified.** Everything you couldn't confirm, each with the one check that would settle it. This is how the report keeps recall without inflating the confirmed list.
-- **Not assessed.** Lenses your evidence base couldn't support, and what you'd need. Stating the gap is worth more than padding the report.
+- **Suspected — unverified.** Everything you couldn't confirm, each with the one check that would settle it. Label it honestly: when this was measured, roughly **one in eleven** model-only findings turned out to be a genuine discovery the humans had missed. That one is worth keeping — in the study it was a real interaction failure every professional evaluator overlooked. But a reader must know the base rate before spending time here.
+- **Not assessed.** Lenses your evidence base couldn't support, and what you'd need.
+- **Cannot be seen from this artifact.** Say it plainly: a static read cannot find discoverability, affordance, or mental-model failures — whether a user realises a panel scrolls, that a control is tappable, or that a feature exists at all. Those need someone watching a real person. Heuristic evaluation complements user research; it does not replace it. The honest use of this report is to decide what to put in front of users next.
 
 End with the 2–3 highest-leverage fixes called out.
+
+### Two cheap checks before you ship
+
+**The paste test.** If a finding could be pasted unchanged onto a different screen of a different product, it isn't a finding. "Users might not understand these icons" passes nothing; "the icon at `Toolbar.tsx:34` has no label and no `aria-label`, and its handler archives rather than deletes" is a finding. Vagueness alone was enough to classify findings as false alarms when this was studied.
+
+**The contradiction check.** Read your own findings against each other and ask whether any two assert opposite things about the same element. Models have been observed praising a screen's consistency and condemning its inconsistency inside a single report. This costs one pass and catches an embarrassing class of error.
 
 ### The actionability test
 
@@ -159,4 +204,12 @@ The LLM-auditor guidance in this file is drawn from published evaluations of mac
 - Holter, Koh, Dogan & Chan, *UXCascade: Scalable Usability Testing with Simulated User Agents* — [arXiv:2601.15777](https://arxiv.org/abs/2601.15777). Ran GPT-5 in August 2025; source of the finding that agents show significantly lower behavioural variability than humans and are unsuited to aesthetic judgement.
 - Kaiser et al., *Simulating Human Opinions with Large Language Models* (UMAP 2025). Source of the substantially-reduced-variance and positivity-bias findings in simulated responses.
 
-Nielsen's evaluator-coverage baselines (a single evaluator finding 20–50% of issues, three to five specialists 74–87%) are from the Nielsen Norman Group's published guidance on heuristic evaluation.
+- Lewis, Sauro, Schiavone & Plabst, *Does AI Find Real UI Problems or Just Hallucinations?* and the two studies preceding it in the same series, MeasuringU (2026). Source of the Confirmed / false alarm / hallucination taxonomy and its definitions, the one-in-eleven base rate for model-only findings, the 31% and 57% self-agreement figures, the finding that a genuine discovery appeared in every run while hallucinations clustered in single runs, and the five-false-alarms-from-one-misreading result.
+- Wu, Swearngin, Vajjala, Leung, Nichols & Barik, *Improving User Interface Generation Models from Designer Feedback* (CHI 2026) — [arXiv:2509.16779](https://arxiv.org/abs/2509.16779). Source of the finding that forced ranking produced expert agreement at chance level and degraded models trained on it, while spatially grounded feedback performed best.
+- Nielsen, *Severity Ratings for Usability Problems* (1994) and Moran & Gordon, *How to Conduct a Heuristic Evaluation* (2023), Nielsen Norman Group. Source of the 0–4 scale and its frequency/impact/persistence factors, the requirement to rate severity in a separate pass and to average independent ratings, the three-to-five evaluator recommendation and evaluator independence, the violation-is-not-automatically-a-problem rule, and the coverage baselines above.
+- Rosala & Moran, *Synthetic Users* and Sponheim & Brown, *AI UX-Design Tools Are Not Ready for Primetime*, Nielsen Norman Group. Source of the idealisation and flat-prioritisation failure modes and of the prohibition on generating user research data.
+- Elman, *The Core Skill of Design in the AI Era: Critique*, Nielsen Norman Group (2026). Source of the objective-but-not-arbitrary criterion rule and of decomposing a wide judgement into narrow component judges.
+- Lu, Huang, Han, Yao, Bei, Gesi, Xie, Sang, Wang, He & Wang, *Can LLM Agents Simulate Multi-Turn Human Behavior? Evidence from Real Online Customer Behavior Data* — [arXiv:2503.20749](https://arxiv.org/abs/2503.20749). Source of the ~12% next-action accuracy figure across 230,965 real actions, and of the three named directional biases: assumed task completion, filter overuse, and absence of retry. Also the source of the distinction between accuracy-oriented and cognition-oriented reasoning.
+- Lu, Yao et al., *UXAgent* — [arXiv:2502.12561](https://arxiv.org/abs/2502.12561) and [arXiv:2504.09407](https://arxiv.org/abs/2504.09407). Source of the practitioner finding that simulated output is valued as supplementary and as a prompt to revise one's own study design, while sixteen UX researchers disagreed that it can replace human participants.
+
+A note on the state of this evidence: the sources disagree with each other in places, and one research group's own benchmark undercuts its own systems papers. Where that happens this skill follows the measurement rather than the claim. Several relevant papers sit behind publisher blocks and could not be read directly; where a claim here rests on an abstract alone, it is not stated as a number.
