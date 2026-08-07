@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Long unbroken number strings (card, phone, account) shown without grouping.
 - Content walls with no sections, headings, or paragraphs.

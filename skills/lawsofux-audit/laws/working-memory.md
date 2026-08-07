@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - Information shown on one step but needed on a later one, with no carry-forward.
 - Confirmation codes, totals, or selections the user must memorize between screens.

@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Long flat menus and `<select>`s with no grouping.
 - Action bars with 4+ peer buttons.

@@ -4,6 +4,8 @@
 
 **Lens:** Gestalt · visual grouping
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - No card, border, or background separating distinct groups.
 - Sections that bleed together with nothing enclosing them.

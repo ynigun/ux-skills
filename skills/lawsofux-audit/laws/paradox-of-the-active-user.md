@@ -4,6 +4,8 @@
 
 **Lens:** Mental models & expectation
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Onboarding that assumes the docs/tour were read.
 - Empty states with no inline guidance on what to do next.

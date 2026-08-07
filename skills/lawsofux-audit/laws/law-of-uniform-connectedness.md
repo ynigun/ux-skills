@@ -4,6 +4,8 @@
 
 **Lens:** Gestalt · visual grouping
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - A label not visually connected to its input (no shared row/line/container, no `for`/`id`).
 - Stepper or breadcrumb whose steps aren't joined by a connecting line.

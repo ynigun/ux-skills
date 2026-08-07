@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Important notices styled like ads/banners (users banner-blind them).
 - Critical CTAs placed in regions users learn to ignore (sidebars, far corners).

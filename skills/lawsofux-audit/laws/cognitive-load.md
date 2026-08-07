@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Jargon, unexplained abbreviations, raw IDs shown to users.
 - Dense screens with no hierarchy; everything competing at once.

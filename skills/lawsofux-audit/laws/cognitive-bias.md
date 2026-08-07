@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Misleading defaults or pre-checked options (default bias used against the user).
 - Anchoring (a struck-through "was" price to inflate perceived value).

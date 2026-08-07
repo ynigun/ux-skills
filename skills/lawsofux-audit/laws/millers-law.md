@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Long ungrouped lists, menus, or forms (12 fields in one column).
 - Data the user must hold across steps because the UI doesn't carry it.

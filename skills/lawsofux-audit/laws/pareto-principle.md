@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - The primary path given equal visual weight to rare actions.
 - Effort spread evenly across features instead of concentrated on the few that drive most use.

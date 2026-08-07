@@ -30,31 +30,76 @@ If the project already has a knowledge graph from `/understand`, use it rather t
 - **Your default story is that the user succeeds.** Models are trained on task completion, so the instinct is to narrate a smooth path: the user finishes, uses the advanced controls, never mistypes. Real users quit, ignore filters, and retry constantly. When you catch yourself describing a clean run through the UI, that's the bias, not a finding.
 - **You don't get tired.** This is the real advantage. Human reviewers fade across a long evaluation; you don't. The exhaustive, boring, every-lens-every-screen sweep is where you win — so do it.
 
-## The lenses
+## The lenses, grouped by what you sweep them over
 
-Most principles won't apply to a given screen. That's expected — report the ones that bite.
+Each lens says at the top which **unit of analysis** it applies to. That's what makes the sweep finishable: you're not asking "does Hick's Law apply to this app?" — you're walking a list, and for each row the answer is a finding or an explicit *n/a*.
 
-**Interaction & decision cost** — [Hick's Law](laws/hicks-law.md) · [Choice Overload](laws/choice-overload.md) · [Fitts's Law](laws/fittss-law.md) · [Jakob's Law](laws/jakobs-law.md) · [Miller's Law](laws/millers-law.md) · [Doherty Threshold](laws/doherty-threshold.md) · [Peak-End Rule](laws/peak-end-rule.md) · [Goal-Gradient](laws/goal-gradient-effect.md) · [Serial Position](laws/serial-position-effect.md) · [Aesthetic-Usability](laws/aesthetic-usability-effect.md) · [Postel's Law](laws/postels-law.md) · [Tesler's Law](laws/teslers-law.md) · [Occam's Razor](laws/occams-razor.md) · [Pareto Principle](laws/pareto-principle.md) · [Parkinson's Law](laws/parkinsons-law.md) · [Flow](laws/flow.md)
+**Object lenses (11)** — walk every domain object, and for each, its states and its actions.
+[Hick's Law](laws/hicks-law.md) · [Choice Overload](laws/choice-overload.md) · [Mental Model](laws/mental-model.md) · [Jakob's Law](laws/jakobs-law.md) · [Postel's Law](laws/postels-law.md) · [Tesler's Law](laws/teslers-law.md) · [Occam's Razor](laws/occams-razor.md) · [Pareto Principle](laws/pareto-principle.md) · [Von Restorff](laws/von-restorff-effect.md) · [Cognitive Bias](laws/cognitive-bias.md) · [Similarity](laws/law-of-similarity.md)
 
-**Gestalt / visual grouping** — [Proximity](laws/law-of-proximity.md) · [Common Region](laws/law-of-common-region.md) · [Similarity](laws/law-of-similarity.md) · [Uniform Connectedness](laws/law-of-uniform-connectedness.md) · [Prägnanz](laws/law-of-pragnanz.md)
+**Screen lenses (11)** — walk every rendered view.
+[Fitts's Law](laws/fittss-law.md) · [Miller's Law](laws/millers-law.md) · [Cognitive Load](laws/cognitive-load.md) · [Chunking](laws/chunking.md) · [Selective Attention](laws/selective-attention.md) · [Proximity](laws/law-of-proximity.md) · [Common Region](laws/law-of-common-region.md) · [Uniform Connectedness](laws/law-of-uniform-connectedness.md) · [Prägnanz](laws/law-of-pragnanz.md) · [Aesthetic-Usability](laws/aesthetic-usability-effect.md) · [Paradox of the Active User](laws/paradox-of-the-active-user.md)
 
-**Cognitive load, attention & memory** — [Cognitive Load](laws/cognitive-load.md) · [Working Memory](laws/working-memory.md) · [Chunking](laws/chunking.md) · [Selective Attention](laws/selective-attention.md) · [Von Restorff](laws/von-restorff-effect.md) · [Zeigarnik](laws/zeigarnik-effect.md) · [Cognitive Bias](laws/cognitive-bias.md)
+**Flow lenses (8)** — walk every multi-step sequence.
+[Doherty Threshold](laws/doherty-threshold.md) · [Goal-Gradient](laws/goal-gradient-effect.md) · [Peak-End Rule](laws/peak-end-rule.md) · [Serial Position](laws/serial-position-effect.md) · [Zeigarnik](laws/zeigarnik-effect.md) · [Working Memory](laws/working-memory.md) · [Flow](laws/flow.md) · [Parkinson's Law](laws/parkinsons-law.md)
 
-**Mental models & expectation** — [Mental Model](laws/mental-model.md) · [Paradox of the Active User](laws/paradox-of-the-active-user.md) · (also [Jakob's Law](laws/jakobs-law.md))
+Most cells come back *n/a*. That's the expected result, not a failure — report the ones that bite, and let the empty cells prove you swept.
 
-**Short on time?** The lenses that yield provable findings from code are [Mental Model](laws/mental-model.md) (label versus handler), [Postel's Law](laws/postels-law.md) (read the validators), [Working Memory](laws/working-memory.md) (trace the data flow), [Uniform Connectedness](laws/law-of-uniform-connectedness.md) (`for`/`id` pairing), [Doherty Threshold](laws/doherty-threshold.md) (pending state bound to the UI), and [Cognitive Bias](laws/cognitive-bias.md) (initial checkbox state). Expect little from [Prägnanz](laws/law-of-pragnanz.md), [Aesthetic-Usability](laws/aesthetic-usability-effect.md) and [Flow](laws/flow.md) without a rendered page.
+**Short on time?** The object sweep pays best, and inside it [Mental Model](laws/mental-model.md) (label versus handler) and [Postel's Law](laws/postels-law.md) (read the validators) yield the most provable findings, followed by [Working Memory](laws/working-memory.md) (trace the data flow), [Uniform Connectedness](laws/law-of-uniform-connectedness.md) (`for`/`id` pairing), [Doherty Threshold](laws/doherty-threshold.md) (pending state bound to the UI) and [Cognitive Bias](laws/cognitive-bias.md) (initial checkbox state). Expect little from [Prägnanz](laws/law-of-pragnanz.md), [Aesthetic-Usability](laws/aesthetic-usability-effect.md) and [Flow](laws/flow.md) without a rendered page.
 
 ## Process
 
-1. **Map the codebase.** Routes, domain objects, state, central stylesheet — Phase 1 of `references/reading-the-code.md`. Extract it mechanically; don't record a single finding during this pass.
-2. **State your evidence base.** Code only? Screenshots? A running page? Write it down — it bounds what you can legitimately claim. If you only have code, ask for a screenshot or run the app; it's cheaper than guessing.
-3. **Run one lens at a time.** Open the lens file, run its *Verify it from the code* checks, then read its *Not a violation* list before writing anything down. One lens per pass beats one sweep over all thirty. For each candidate, go find how the rest of the codebase handles the same situation before calling it a violation.
-4. **Do a cross-screen pass.** This is the blind spot per-screen sweeps cannot reach by construction — each screen looks fine alone. Compare naming and control behaviour across every screen: the same concept called two things, a control that changes meaning between views, a value shown on one screen and needed on another.
-5. **Repeat the sweep, independently, at least twice more.** Don't let a later pass see the earlier ones. Findings that show up in every run are the ones to trust; findings that appear once are usually noise. This is cheap and it's the highest-leverage thing you can do.
-6. **Verify each finding against the actual element.** Open it. If you can't cite it, move it to Suspected with the check that would settle it.
-7. **Aggregate.** Merge the duplicates the per-lens, per-screen and multi-run passes produced. Then ask the harder question: do any of these share a single *assumption* of mine? One misreading of what the user is doing will reappear as five differently-worded findings.
-8. **Apply the tradeoff test.** A violated principle isn't automatically a defect — it depends on context and the alternatives. A hamburger menu really does violate recognition-over-recall and is often still right on mobile. Ask: what would the alternative cost, and can the user recover in one click? If the alternative is worse, it's not a finding.
-9. **Rate severity last, in its own pass** over the consolidated list. Discovery and rating compete for attention; doing both at once is what makes everything come out "Major".
+The spine is **OOUX**: map the objects first, then walk the principles across the map. That ordering is what turns "review this UI" into a list you can finish and a coverage claim you can defend.
+
+### Step 1 — Build the inventory (no findings yet)
+
+Three lists, in this order. `references/reading-the-code.md` Phase 1 has the extraction commands.
+
+**Objects.** The nouns the product manipulates — Order, Document, Booking, Ticket. Get them from the data layer, not the UI: schemas, migrations, model definitions. For each object, fill in three columns from the code:
+
+| Object | States | Actions | Relationships |
+|---|---|---|---|
+| Order | draft, placed, paid, shipped, cancelled | place, pay, cancel, refund, archive | belongs-to Customer, has-many LineItems |
+
+- **States** come from enum columns, `status` fields, boolean flags, `deleted_at`.
+- **Actions** come from handlers, mutations, and endpoints that write the object — not from buttons you noticed.
+- **Relationships** come from foreign keys and joins.
+
+Then, before moving on, sweep the grid itself — this is the OOUX pass and it finds the worst bugs on its own:
+- **Every (state × action) cell.** Is the action valid in that state, and does the UI actually prevent the invalid ones? "The backend rejects it" is not "the UI prevents it."
+- **Every state: is there a path back?** Terminal states are the single richest source of critical findings. A "Cancelled" with no reinstate, an "Archived" with no restore.
+- **Every relationship: what happens to the children?** Deleting the parent — orphans, cascade, or silent hide?
+
+**Screens.** Every route or view, from the router. Note which objects each one renders — that link is what makes the object sweep reach the UI.
+
+**Flows.** Every multi-step sequence: signup, checkout, onboarding, anything with a wizard, a `step` variable, or a route per stage.
+
+### Step 2 — State your evidence base
+
+Code only? Screenshots? A running page? Write it down — it bounds what you can legitimately claim. If you only have code, ask for a screenshot or run the app; that's cheaper than guessing.
+
+### Step 3 — Sweep principle by principle, over its own list
+
+For each lens: open the file, check its **unit of analysis**, then walk that list — every object, or every screen, or every flow. Run the lens's *Verify it from the code* checks, then read its *Not a violation* list before writing anything down.
+
+One lens per pass, not one sweep over all thirty. And for each candidate, go find how the rest of the codebase handles the same situation before calling it a violation.
+
+Record an explicit **n/a** for cells with no finding. The empty cells are the evidence that you swept, and they're what lets you say honestly what was covered.
+
+### Step 4 — Sweep the objects *across* screens
+
+Per-screen checks cannot catch this by construction: each screen looks fine alone. Take each object and compare its treatment everywhere it appears — the same concept named two different things, an action whose label differs between views, a control that changes meaning, a value shown on one screen and needed on another. The object inventory makes this a mechanical walk instead of a hope.
+
+### Step 5 — Repeat independently, at least twice more
+
+Don't let a later pass see the earlier ones. Findings that appear in every run are the ones to trust; findings that appear once are usually noise. Cheap, and the highest-leverage thing you can do.
+
+### Step 6 — Verify, aggregate, judge
+
+- **Verify** each finding against the actual element. If you can't cite it, move it to Suspected with the check that would settle it.
+- **Aggregate.** The grid makes most duplicates collapse on their own — one cell, one finding, however many screens it showed up on. Then ask the harder question: do any of these share a single *assumption* of mine? One misreading reappears as five differently-worded findings.
+- **Tradeoff test.** A violated principle isn't automatically a defect; it depends on context and the alternatives. A hamburger menu really does violate recognition-over-recall and is often still right on mobile. Ask what the alternative would cost and whether the user recovers in one click.
+- **Rate severity last,** in its own pass over the consolidated list. Discovery and rating compete for attention; doing both at once is what makes everything come out "Major".
 
 ## Deliverable
 
@@ -71,6 +116,8 @@ For each finding:
 - **Gap** — what's actually there, in *this* element
 - **Fix** — the smallest change that closes it. Prefer preventing over correcting: disabling an invalid choice beats validating it after entry.
 - **Cost** — what it does to the user, structurally
+
+Lead with the **coverage grid** — objects/screens/flows down one axis, principles across the other, each cell a finding reference or *n/a*. It is the cheapest part of the report to produce and the most valuable to the reader: it's the only thing that distinguishes "I found four problems" from "I checked ninety cells and four of them bit."
 
 Close with three sections:
 

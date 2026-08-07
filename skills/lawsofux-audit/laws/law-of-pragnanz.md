@@ -4,6 +4,8 @@
 
 **Lens:** Gestalt · visual grouping
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Visually noisy, ambiguous layouts that force interpretation work.
 - Complex iconography or illustration where a simple shape would read instantly.

@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Inherent complexity pushed onto the user instead of handled by the system ("configure your account in one step" that's really four).
 - Manual steps the system could do (compute totals, infer country from ZIP, default the obvious).

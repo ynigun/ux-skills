@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - Needless interruptions: modals, confirmations, and context switches mid-task.
 - Friction spikes that break concentration (a sudden re-login, an unexpected step).

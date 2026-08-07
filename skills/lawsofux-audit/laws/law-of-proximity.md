@@ -4,6 +4,8 @@
 
 **Lens:** Gestalt · visual grouping
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Related fields placed far apart; unrelated fields adjacent.
 - A label detached from its control by wide spacing.

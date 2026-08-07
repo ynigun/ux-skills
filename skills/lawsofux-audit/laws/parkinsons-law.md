@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - No smart defaults or autofill that would let users finish faster.
 - Flows with no time-saving shortcuts; every task takes as long as the UI allows.

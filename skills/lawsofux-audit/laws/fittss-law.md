@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Small touch/click targets (below ~44px on touch).
 - Primary actions placed far from where the eye or hand already is.

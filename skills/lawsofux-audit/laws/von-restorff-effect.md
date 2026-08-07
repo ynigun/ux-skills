@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - A primary action that looks like every other button (no emphasis).
 - Everything weighted equally, so nothing draws the eye.

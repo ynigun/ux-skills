@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **screen**. Sweep this lens across every rendered view in your inventory.
+
 ## Look for
 - Raw, unstyled, or visually inconsistent UI that erodes trust before use.
 - Conversely: a polished surface that *masks* a real usability problem you should still flag.

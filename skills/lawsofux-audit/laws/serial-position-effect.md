@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - Most-important nav items or actions buried in the middle of a list.
 - Button order that puts the safe/expected default last or in the middle.

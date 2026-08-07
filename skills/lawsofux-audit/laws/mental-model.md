@@ -4,6 +4,8 @@
 
 **Lens:** Mental models & expectation
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - UI that contradicts the obvious model: a Save that discards, an Archive that deletes, a back button that loses data.
 - Terms or icons whose behavior doesn't match what users assume they mean.

@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Redundant controls (two ways to do one thing — a Save button *and* a save link).
 - Decorative fields, steps, or options that add no value.

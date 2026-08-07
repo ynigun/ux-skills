@@ -4,6 +4,8 @@
 
 **Lens:** Gestalt · visual grouping
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Links styled like buttons (or vice versa) — falsely grouped as the same kind of thing.
 - Unlike things sharing one style; like things styled differently.

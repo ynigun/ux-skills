@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics / Mental models · expectation
 
+**Unit of analysis:** the **object**. Sweep this lens across every domain object in your inventory, checking each of its states and actions.
+
 ## Look for
 - Reinvented navigation, controls, or gestures with no convention behind them.
 - Non-standard icon meanings (a heart that archives, a trash that exports).

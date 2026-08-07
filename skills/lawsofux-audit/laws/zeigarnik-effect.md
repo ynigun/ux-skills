@@ -4,6 +4,8 @@
 
 **Lens:** Cognitive load, attention & memory
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - No "you have N steps left" / incomplete-profile nudges where they'd help completion.
 - Conversely: manufactured or fake incompleteness used to nag (dark pattern).

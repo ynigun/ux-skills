@@ -4,6 +4,8 @@
 
 **Lens:** Heuristics · interaction & decision cost
 
+**Unit of analysis:** the **flow**. Sweep this lens across every multi-step sequence in your inventory.
+
 ## Look for
 - Flows that end on a raw error, a dead-end, or an anticlimax instead of confirmation.
 - No moment of delight or reassurance at the most important step.
