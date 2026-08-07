@@ -22,6 +22,12 @@ Get these before forming a single opinion:
 
 - **Routes / screens.** Find the router. File-based routing (`app/`, `pages/`, `routes/`) gives you the list from `find`. Otherwise grep the route-definition call (`createBrowserRouter`, `<Route`, `@app.route`, `r.Get(`). This list is the audit's scope.
 - **Domain objects.** From the data layer, not the UI: schema files, migrations, model definitions, the shared types file.
+
+  Two traps here, both of which produce a *wrong* state machine rather than an incomplete one — which is worse, because a wrong one generates confident false findings:
+
+  **Scope every grep to one table.** A pattern like `grep -o "status = '[a-z_]*'"` across a schema directory returns the union of every table's states as if they belonged to one object. You end up auditing an object that doesn't exist. Extract per table, and sanity-check the count against the enum or the column comment.
+
+  **Transitions usually live in more than one layer.** Query files (sqlc, `.sql`, an ORM's scopes) are the obvious source, but the same table is often also updated by raw SQL embedded in application code — `tx.Exec("UPDATE ... SET status=...")`. If you read only the query files, states that *are* reachable look terminal, and "this state has no way out" becomes a Critical you can't defend. Before claiming any state is terminal, grep the whole tree for the table name alongside `UPDATE`, `SET`, and the state's literal value.
 - **State.** Grep for store creation (`createContext`, `writable(`, `useReducer`, `zustand`, `signal(`). State that lives inside a component dies with it — that fact alone produces findings.
 - **The central stylesheet.** Read it end to end, once. Highest-yield read in the audit: a rule targeting a bare tag silently overrides scoped component styles everywhere, and no amount of component reading reveals it.
 

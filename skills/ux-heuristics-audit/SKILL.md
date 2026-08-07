@@ -61,9 +61,11 @@ Three lists, in this order. `references/reading-the-code.md` Phase 1 has the ext
 |---|---|---|---|
 | Order | draft, placed, paid, shipped, cancelled | place, pay, cancel, refund, archive | belongs-to Customer, has-many LineItems |
 
-- **States** come from enum columns, `status` fields, boolean flags, `deleted_at`.
+- **States** come from enum columns, `status` fields, boolean flags, `deleted_at`. Scope each extraction to one table — a grep across the whole schema returns every table's states merged into one imaginary object.
 - **Actions** come from handlers, mutations, and endpoints that write the object — not from buttons you noticed.
 - **Relationships** come from foreign keys and joins.
+
+Guarded updates are the best source you'll get for the transitions: `SET status='paid' WHERE status='pending'` hands you an edge and its precondition in one line. But **collect them from every layer before you trust the machine.** Query files are the obvious place; the same table is often also written by raw SQL inside application code, and a state that looks terminal in the query files may have its only exit there. Getting this wrong doesn't leave a gap — it manufactures a confident Critical.
 
 Then, before moving on, sweep the grid itself — this is the OOUX pass and it finds the worst bugs on its own:
 - **Every (state × action) cell.** Is the action valid in that state, and does the UI actually prevent the invalid ones? "The backend rejects it" is not "the UI prevents it."
