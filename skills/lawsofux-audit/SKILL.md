@@ -19,14 +19,14 @@ Each principle lives in its own file under `laws/`. This file is the **method**;
 
 ## Working as an LLM auditor — read this before you start
 
-You are not a human evaluator with eyes on a screen. Your failure modes are specific, measured, and different from a human's. Research on LLM-driven usability evaluation reports exactly four, and every one of them is preventable:
+You are not a human evaluator with eyes on a screen. Your failure modes are specific, measured, and different from a human's. Studies of LLM-driven usability evaluation report four recurring ones, and every one of them is preventable:
 
 | Documented failure | What it looks like here | The discipline |
 |---|---|---|
-| **Issues that don't exist** — models "tend to predict issues that do not exist" | A confident finding about a control you never opened | Every finding needs a file:line or a named element. No citation → delete it. |
-| **Recommendations too general** — *"if there is a usability issue with one of them it should state which field and where to find it"* | "The form has too many fields" | Name the field, the file, and the line. A finding that doesn't say *where* is not a finding. |
-| **Missing existing functionality** — flagging absent validation that is in fact implemented | "No error handling here" when the handler is in another file | Search for the thing before declaring it absent. Each lens file's **Not a violation** section lists the specific handled cases that look like violations. |
-| **Ties in severity** — explicit severity labels produce "multiple identical ratings," defeating prioritization | Nine findings all marked Major | Bucket by severity, then force a **strict 1..N order**. See Deliverable. |
+| **Issues that don't exist.** Models report problems that aren't there. | A confident finding about a control you never opened | Every finding needs a file:line or a named element. No citation → demote it, don't assert it. |
+| **Recommendations too general.** Engineers receiving machine-generated reports consistently ask *which* element and *where* — a report naming neither can't be acted on. | "The form has too many fields" | Name the field, the file, and the line. A finding that doesn't say *where* is not a finding. |
+| **Missing existing functionality.** Flagging validation, error handling, or a guard as absent when it is implemented elsewhere. | "No error handling here" when the handler is in another file | Search for the thing before declaring it absent. Each lens file's **Not a violation** section lists the specific handled cases that look like violations. |
+| **Severity labels collapse into ties.** Asked for explicit severity ratings, models return many identical ones, which defeats prioritisation. | Nine findings all marked Major | Bucket by severity, then force a **strict 1..N order**. See Deliverable. |
 
 Three further constraints that come from what you actually are:
 
