@@ -9,7 +9,12 @@ Heuristic evaluation against 30 established UX principles, done by reading the c
 
 This file is the **method**. The `laws/` files are the **lenses** — one per principle, each with what to look for, how to verify it from the code, and what is *not* a violation. Open a lens when you're about to use it; don't work from memory of what the principle means.
 
-**Read [`references/reading-the-code.md`](references/reading-the-code.md) before you start.** It's the systematic part: how to map a codebase, how to prove something is missing, which seams to read both sides of, and how to answer consistency questions mechanically instead of from memory. The audit is only as good as the reading.
+**Read [`references/reading-the-code.md`](references/reading-the-code.md) before you start.** It's the systematic part, and the audit is only as good as the reading. Its rule — *no finding without reading the code that produces it* — is what the rest of this file assumes. Two techniques from it are worth knowing before you even open a lens:
+
+- **Find the working example and diff against it.** Almost every codebase already does the thing right somewhere. "This form should validate" is an opinion; "`CheckoutForm.tsx` validates on blur and shows an inline error, `ProfileForm.tsx:88` does neither, same pattern" is a finding.
+- **Follow the incoming edges, not just the outgoing ones.** Who calls this? One caller is a local fix, twelve is systemic — that difference *is* the severity rating.
+
+If the project already has a knowledge graph from `/understand`, use it rather than rebuilding the map by hand.
 
 ## Two rules that decide whether this works
 
@@ -41,9 +46,9 @@ Most principles won't apply to a given screen. That's expected — report the on
 
 ## Process
 
-1. **Map the codebase.** Routes, domain objects, state, central stylesheet — see `references/reading-the-code.md` §1. Don't record a single finding during this pass.
+1. **Map the codebase.** Routes, domain objects, state, central stylesheet — Phase 1 of `references/reading-the-code.md`. Extract it mechanically; don't record a single finding during this pass.
 2. **State your evidence base.** Code only? Screenshots? A running page? Write it down — it bounds what you can legitimately claim. If you only have code, ask for a screenshot or run the app; it's cheaper than guessing.
-3. **Run one lens at a time.** Open the lens file, run its *Verify it from the code* checks, then read its *Not a violation* list before writing anything down. One lens per pass beats one sweep over all thirty.
+3. **Run one lens at a time.** Open the lens file, run its *Verify it from the code* checks, then read its *Not a violation* list before writing anything down. One lens per pass beats one sweep over all thirty. For each candidate, go find how the rest of the codebase handles the same situation before calling it a violation.
 4. **Do a cross-screen pass.** This is the blind spot per-screen sweeps cannot reach by construction — each screen looks fine alone. Compare naming and control behaviour across every screen: the same concept called two things, a control that changes meaning between views, a value shown on one screen and needed on another.
 5. **Repeat the sweep, independently, at least twice more.** Don't let a later pass see the earlier ones. Findings that show up in every run are the ones to trust; findings that appear once are usually noise. This is cheap and it's the highest-leverage thing you can do.
 6. **Verify each finding against the actual element.** Open it. If you can't cite it, move it to Suspected with the check that would settle it.

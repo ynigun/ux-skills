@@ -1,94 +1,134 @@
 # Reading the code systematically
 
-This is the part that decides whether the audit works. The lenses tell you *what* to look for; this tells you how to move through a codebase so you actually find it instead of sampling a few files and guessing.
+The lenses tell you *what* to look for. This tells you how to move through a codebase so you actually find it.
 
-None of it is UX-specific. It's how to read unfamiliar code without fooling yourself.
+None of this is UX-specific — it's borrowed from methods that already work for agents reading code: structural extraction before judgement, following the dependency graph in both directions, finding a working example and diffing against it, and tracing backward from a symptom to its source.
 
-## 1. Build the map before you judge anything
+## The rule that makes the rest work
 
-You cannot audit what you haven't enumerated, and an audit that starts with opinions about the first file you opened will stay there. Spend the first pass building a list, not findings.
+```
+NO FINDING WITHOUT READING THE CODE THAT PRODUCES IT
+```
 
-Get these four things, in this order:
+Not the file name. Not the grep line. The code. Everything below is in service of that.
 
-- **Routes / screens.** Find the router. File-based routing (`app/`, `pages/`, `routes/`) gives you the list for free — `find` the directory. Otherwise grep for the route-definition call (`createBrowserRouter`, `<Route`, `@app.route`, `r.Get(`). This list is the audit's scope; write it down.
-- **The domain objects.** What nouns does the app manipulate? Get them from the data layer, not from the UI: schema files, migrations, model/type definitions. `find . -name "*.sql"`, the ORM models, the shared `types.ts`.
-- **The state.** Where does UI state live? Grep for the store creation (`createContext`, `writable(`, `useReducer`, `zustand`, `signal(`). State that lives in a component dies with it — that fact produces findings on its own.
-- **The central stylesheet.** Find it and read it end to end, once, before any visual claim. This is the highest-yield read in the whole audit: a rule targeting a bare tag silently overrides carefully scoped component styles everywhere, and you cannot infer that from the component.
+---
 
-Only now start looking for problems.
+## Phase 1 — Extract structure mechanically, before you judge anything
 
-## 2. Grep to locate, read to judge
+The most reliable code-analysis tools available all do the same thing first: run a **deterministic extraction** to get structure, then apply judgement on top of the result. Never ask yourself to hold a codebase in your head when a command can hand you the facts.
 
-The most common way to be confidently wrong is to judge from a grep excerpt. A match tells you where to look; it does not tell you what the code does.
+Get these before forming a single opinion:
 
-- Grep gives you candidates. Open the file and read around each hit — the guard clause three lines up is usually the thing that decides whether it's a bug.
-- When a file is under a few hundred lines and it's the subject of a finding, read the whole thing. Cheaper than being wrong.
-- Read the imports at the top before judging the body. Half of "this isn't handled" turns out to be handled by something imported from elsewhere.
+- **Routes / screens.** Find the router. File-based routing (`app/`, `pages/`, `routes/`) gives you the list from `find`. Otherwise grep the route-definition call (`createBrowserRouter`, `<Route`, `@app.route`, `r.Get(`). This list is the audit's scope.
+- **Domain objects.** From the data layer, not the UI: schema files, migrations, model definitions, the shared types file.
+- **State.** Grep for store creation (`createContext`, `writable(`, `useReducer`, `zustand`, `signal(`). State that lives inside a component dies with it — that fact alone produces findings.
+- **The central stylesheet.** Read it end to end, once. Highest-yield read in the audit: a rule targeting a bare tag silently overrides scoped component styles everywhere, and no amount of component reading reveals it.
 
-## 3. Searching for absence is a different skill from searching for presence
+**If the project has a knowledge graph** (`.understand-anything/knowledge-graph.json`, from `/understand`), use it — it already contains the file/function/class nodes and the imports/calls/contains edges, and grepping it is far cheaper than rebuilding the map by hand. If not and the codebase is large, the `Explore` agent can do this sweep and hand you back the map without filling your context with file dumps.
 
-Most false findings are claims that something is missing. Proving absence is genuinely harder than proving presence, and needs a different technique.
+Record no findings during this phase.
 
-**Never conclude "there is no X" from one grep for one spelling.** Search the concept, not the word:
+## Phase 2 — Query the index; read only what you need
 
-- Validation: `validate|schema|zod|yup|joi|rule|constraint|pattern=|required`
-- Soft delete: `deleted_at|is_deleted|isDeleted|archived|status|trash|restore|soft`
-- Loading state: `loading|isLoading|pending|isPending|busy|submitting|isFetching|spinner|skeleton`
-- Accessible name: `aria-label|aria-labelledby|<label|sr-only|visually-hidden|title=`
-- Error handling: `catch|onError|error|try|rescue|except|Result|err !=`
+Once you have a map, don't read the codebase — query it.
 
-Then check the layer above: a wrapper component, a middleware, a base class, a decorator, a global handler. If you still find nothing, say **"I searched X, Y, Z and found none"** rather than "there is none." That sentence is honest and still actionable.
+- Grep the index or the tree for candidates. Open only the files a candidate points at.
+- **Grep locates; reading judges.** Judging from a grep excerpt is the most common way to be confidently wrong — the guard clause three lines above the match usually decides whether there's a bug at all.
+- Read the imports before the body. Half of "this isn't handled" is handled by something imported from elsewhere.
+- When a file is the subject of a finding and it's under a few hundred lines, read all of it.
 
-## 4. Read both sides of every boundary
+## Phase 3 — Follow edges in *both* directions
 
-Almost every real UX defect lives at a seam, and you only see it if you read both sides at once:
+Dependency edges have a direction, and the one people forget is the one that matters most.
 
-| Boundary | Read together |
+- **Outgoing** — what does this call, import, depend on? Tells you what it does.
+- **Incoming** — *what calls this?* Tells you whether a problem is reachable, how many places share it, and whether the "fix" would break three other screens.
+
+A finding with no incoming trace is a finding you can't size. Before reporting a component defect, grep for its usages: one caller means a local fix, twelve means a systemic one — and that difference is the whole severity rating.
+
+## Phase 4 — Find the working example and diff against it
+
+This is the single most valuable technique here, borrowed straight from systematic debugging, and it converts a subjective judgement into a comparison.
+
+Almost every codebase already does the thing right *somewhere*. Before declaring a violation:
+
+1. **Find a working example in the same codebase.** Another form that does validate. Another list that does have an empty state. Another destructive action that does confirm.
+2. **Read it completely** — not skimmed.
+3. **List every difference,** however small. Don't assume "that can't matter."
+
+You now have a finding of a different quality: not "this form should probably validate," but "`CheckoutForm.tsx` validates on blur and shows an inline error; `ProfileForm.tsx:88` does neither, and they're the same component pattern."
+
+And if you *can't* find a working example anywhere — that's meaningful too. It means you're proposing a new convention, not fixing a deviation, which is a much bigger ask and should be labelled as one.
+
+## Phase 5 — Trace backward from the symptom to the source
+
+When something is wrong at the render layer, don't fix it at the render layer. Trace upward until the value stops being wrong:
+
+- Where does the bad value get displayed?
+- What passed it in?
+- What produced it there?
+- Keep going until you reach the origin.
+
+The finding belongs at the origin. Three screens showing a mangled string are one finding about the parser, not three findings about screens.
+
+Same technique in the other direction for absence: to show a value isn't carried across a wizard step, follow it from where it's captured to every place it's read, and name the point where the trail stops.
+
+## Phase 6 — One hypothesis at a time
+
+State it explicitly: *"I think X is a violation because Y."* Then check that one thing, minimally, against the code. Not five at once — you won't know which observation supported which claim, and neither will the reader.
+
+## Techniques that repay their cost
+
+**Read both sides of every seam.** Real defects live where two things meet, and you only see them holding both:
+
+| Seam | Read together |
 |---|---|
 | Label ↔ behaviour | the button's text **and** its handler |
 | Client ↔ server | the form's validation **and** the endpoint's |
 | Write ↔ read | the INSERT/UPDATE **and** every SELECT that filters on it |
-| Component ↔ cascade | the component's styles **and** the global rules that hit the same tags |
+| Component ↔ cascade | the component's styles **and** the global rules hitting the same tags |
 | State ↔ render | where the flag is set **and** whether any template reads it |
 
-A `loading` variable that gets set but is never rendered is a real bug and it is invisible from either side alone.
+A `loading` flag that's set but never rendered is a real bug, invisible from either side alone.
 
-## 5. Trace one path at a time, all the way
+**Proving absence needs more than one grep.** Search the concept, not one spelling, then check the layer above (a wrapper, middleware, a base class, a global handler):
 
-Pick a value and follow it end to end before starting another. Interleaving traces is how you lose the thread and start guessing.
+- Validation — `validate|schema|zod|yup|joi|pattern=|required`
+- Soft delete — `deleted_at|is_deleted|archived|status|trash|restore`
+- Loading — `loading|isLoading|pending|busy|submitting|skeleton|spinner`
+- Accessible name — `aria-label|aria-labelledby|<label|sr-only|title=`
 
-For each value the user supplies or sees: where does it enter, what normalises it, where is it stored, which queries read it, what filters those queries apply, where does it land in the DOM, and what happens to it when the record is deleted. Note where the trace *breaks* — a value stored and never read back is a finding.
+If you still find nothing, write **"I searched X, Y, Z and found none"** — honest and still actionable.
 
-## 6. Walk the unhappy paths deliberately
-
-The happy path is what the code was written for, so it usually works. Findings concentrate elsewhere, and each of these is a concrete thing to go grep for:
-
-- **Empty:** every list's zero-item branch (`length === 0`, `?.length ?`, `isEmpty`, an `EmptyState` component).
-- **Error:** every `catch`. What does the *user* see? A rendered `err.message` puts a stack trace on screen.
-- **Loading:** every `await` in a handler. What renders in between?
-- **Too much:** long strings, many rows, a 200-character name. Look for truncation, `overflow`, fixed heights.
-- **Interrupted:** what survives navigating away and coming back? Refresh?
-- **Denied:** what does an unauthorised user see — a helpful message or a blank screen?
-
-## 7. Inventory, then compare — never compare from memory
-
-Consistency questions ("are these buttons styled alike?", "does this icon mean the same thing everywhere?") are the ones models get wrong most often, because comparing across files from memory is exactly what an LLM is bad at.
-
-Do it mechanically instead. Collect first, into one list you can see at once:
+**Answer consistency questions mechanically.** Comparing across files from memory is exactly what you're worst at. Collect first, into one list you can see at once, then compare:
 
 ```bash
 grep -rho 'variant="[a-z]*"' src/ | sort | uniq -c | sort -rn
-grep -rn 'className="[^"]*btn[^"]*"' src/ | sed 's/.*className="\([^"]*\)".*/\1/' | sort -u
 ```
 
-Then compare the list. A resolved list of values is an arithmetic check; the same question asked from memory is a guess.
+**Walk the unhappy paths.** The happy path is what the code was written for. Findings concentrate in the zero-item branch, the `catch`, the pending state, the 200-character string, the interrupted flow, the unauthorised view.
 
-## 8. Let the tests and the history point you
+**Let tests and churn point.** Tests document intent — you need intent to claim a mismatch. And `git log --since="3 months ago" --name-only --pretty=format: | sort | uniq -c | sort -rn | head -20` gives you the churn list; fresh code carries more defects than stable code.
 
-- **Tests document intent.** A test asserting a behaviour tells you what was meant, which is what you need to say a mismatch exists. Untested branches are where defects concentrate.
-- **`git log` finds the fresh code.** Recently changed areas carry more defects than stable ones. `git log --since="3 months ago" --name-only --pretty=format: | sort | uniq -c | sort -rn | head -20` gives you the churn list.
-- **TODO/FIXME comments** are the previous developer telling you where the problems are. Grep them.
+## Red flags — stop and go back a phase
 
-## 9. Know when to stop reading and say so
+If you catch yourself thinking any of these, you've skipped a phase:
 
-If a finding depends on something you genuinely cannot see from here — rendered geometry, an external API's response shape, what a third-party component does internally — stop. Write down what you'd need. An audit that names its blind spots is more useful than one that papers over them with a confident guess.
+| Thought | Reality |
+|---|---|
+| "I can tell from the file name" | You can't. Open it. |
+| "The grep line is enough" | The deciding logic is usually just outside the match. |
+| "This looks like a bug I've seen" | Then confirm it here, in this code. |
+| "There's no validation" (after one grep) | Search other spellings and the layer above first. |
+| "This is obviously confusing to users" | You can't assess that. Name the structural cause instead. |
+| "I'll note it now and verify later" | You won't, and it'll ship as confirmed. |
+| "I have enough findings" | Coverage isn't a feeling. Finish the sweep. |
+
+## When one area produces three or more findings
+
+Stop reporting and ask whether it's intentional. Three "violations" clustered in one component usually means one of three things: a deliberate pattern you haven't understood, one root cause with three symptoms, or one wrong assumption of yours reproducing itself. All three call for going back to Phase 4 and finding out how the rest of the codebase handles the same situation — not for filing three findings.
+
+## Know when to stop and say so
+
+If a finding depends on something you genuinely cannot see from here — rendered geometry, an external API's response shape, what a third-party component does internally — stop and write down what you'd need. An audit that names its blind spots is worth more than one that covers them with a confident guess.
