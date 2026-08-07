@@ -36,16 +36,26 @@ Three further constraints that come from what you actually are:
 
 ### Your real problem is recall, not precision
 
-Everything above guards against false findings. But the measured weakness of code-based LLM usability evaluation is the opposite one: in a controlled study, an LLM inspecting app source reached precision of 0.61–0.66 and **recall of only 0.35–0.38** — it was right about most of what it reported, and missed roughly two-thirds of the real issues.
+Everything above guards against false findings. But the measured weakness runs the other way. In a controlled study where a model was given an app's source code, a screenshot of the view, and a description of its context, it reached precision of 0.61–0.66 and **recall of 0.35–0.38** — right about most of what it reported, and missing roughly two-thirds of the issues that traditional usability testing and expert review found between them.
 
-> **On these numbers.** They come from studies run on earlier model generations, and capability has moved since. Treat the *direction* as the durable finding, not the decimals: recall has consistently been the weaker half, because missing an issue requires no confidence while inventing one requires overconfidence. If your own model is better than this, the discipline costs you little; if it isn't, the discipline is what saves the report. Don't cite these figures as current performance.
+Coverage numbers elsewhere land higher — a screenshot-based heuristic sweep reached 73–77% of a master issue set, against 55–63% for five-evaluator human panels on the same apps. For calibration, Nielsen's long-standing baselines put a single human evaluator at 20–50% and three-to-five specialists at 74–87%. A model sits *inside* the specialist band, not above it: competitive on cost and repeatability, not on insight.
+
+> **On all of these numbers.** They come from GPT-4 and GPT-4 Turbo (studies run March–November 2024) and from Gemini 2.0 Flash, a small fast model. No current-generation reasoning model appears in this literature, and every one of these papers says its own figures will age. Treat them as a **floor and a direction**, never as current capability. The durable direction: recall is the weaker half, because missing an issue costs no confidence while inventing one requires overconfidence.
 
 So the guards must not collapse into timidity. A report with three impeccable findings and thirty misses is a failed audit.
 
 - **Sweep every lens explicitly.** Don't stop when you have "enough." The long tail is where the value is.
 - **Don't silently drop what you couldn't verify.** Uncertain items go in a separate **Suspected — unverified** list with what you'd need to confirm them. That preserves recall without contaminating the confirmed findings.
-- **Run the lenses as separate passes** rather than judging all 30 in one sweep. Depth per lens beats one shallow pass over everything.
+- **Run the lenses as separate passes** rather than judging all 30 in one sweep. This is the one process change the literature agrees on: evaluating each heuristic on its own produces more detailed and more varied findings, and a single combined pass also risks truncating mid-analysis. The cost is redundancy, which the next section handles.
 - **Say what you didn't cover.** A named gap is recoverable; a silent one isn't.
+
+### Two things that will wreck the report if you don't handle them
+
+**You will produce duplicates; humans don't.** Per-screen and per-lens passes each treat their slice as a fresh artifact, so the same underlying defect gets reported once per screen it appears on. In a measured comparison, synthetic evaluation generated eight and nine duplicate issues per app while human evaluators produced **zero**. Before writing anything up, run an explicit **aggregation pass**: group findings by the component and root cause they share, and merge. This is the same discipline as clustering by root cause — but it must be a deliberate step, not something you hope happened.
+
+**A large fraction of your raw output will not be real issues.** When findings from these systems were rated by reviewers, roughly a quarter to a third landed at "I don't agree that this is a usability problem at all" — and the overwhelming majority of those came from the model rather than from human evaluators. Expect to discard a lot of your own first pass. Triage before you report: anything you cannot tie to a named element and a concrete cost does not make the confirmed list.
+
+**And do not default to praise.** Asked simply to evaluate a UI, models reliably return reassurance — "clean", "intuitive", "easy to understand" — instead of findings. If your pass over a lens produced only approval, you have not run the lens; go back and look for the specific things its **Look for** section names.
 
 ### What your evidence base can and cannot yield
 
@@ -53,11 +63,13 @@ Yield varies sharply with what you were given. State which case you're in, and d
 
 | Evidence | Strong at | Weak at |
 |---|---|---|
-| **Source code only** | Logic, state, validation, data flow, reversibility, rare paths that user testing never reaches — this is the genuine advantage of code inspection over user testing | Anything visual: layout, spacing, emphasis, whether the rendering actually reads |
-| **Screenshots / rendered UI** | Layout and visual grouping — multimodal heuristic evaluation has been measured *above* individual human evaluators (73–77% of known issues versus 57–63% for experienced evaluators, on the model generation tested) | Recognising unfamiliar UI components and design conventions; **violations that span screens** |
-| **Both, or a live page** | Everything above | Still cross-screen consistency unless you look for it deliberately |
+| **Source code** | Logic, state, validation, data flow, reversibility — and **rare paths user testing never exercises**: behaviour under a slow connection, an unbounded input, an error branch nobody hits. This is code inspection's genuine advantage over watching users. | Anything visual: layout, spacing, emphasis, whether the rendering actually reads |
+| **Screenshots / rendered UI** | Layout and visual grouping. Measured strongest on minimalism and visual consistency — small details like uneven whitespace and insufficient font-size differentiation, where human panels scored far lower. | Recognising platform components and domain design conventions — a system control mistaken for app UI; **violations that span screens** |
+| **Both** | Everything above. The study with the best precision/recall used code *and* a screenshot together, not either alone. | Cross-screen consistency, still, unless you look for it deliberately |
 
-**Ask for screenshots or a running page if you don't have them.** It changes what you can find, and it's cheaper than guessing.
+**Ask for screenshots or a running page if you only have code.** It changes what you can find, and it's cheaper than guessing.
+
+**Where to trust yourself and where to hedge.** You have one real advantage over a human evaluator: no attentional decay. Human reviewers' issue-finding measurably drops off across a long evaluation and their descriptions get terser on repeat problems; a model's stays flat. Long, repetitive sweeps are where you win — so do the boring exhaustive pass, that's the job. Conversely, when a finding depends on recognising a platform component or a domain convention, mark it for human confirmation; that is the measured weak spot.
 
 ## The lenses (one file per principle)
 
@@ -84,13 +96,13 @@ The lenses with the highest ratio of provable findings to guesswork are [Mental 
 2. **State your evidence base.** Code only? Screenshots? A live page? Write it down — it bounds which lenses can produce findings at all.
 3. **Read the real artifact.** Central CSS + the component markup, or the rendered screenshot. Note what's actually there (groupings, confirm dialogs, focus states, soft deletes) so you don't flag handled cases.
 4. **Sweep all four groups.** For each principle you suspect, open its file, run its **Verify it from the code** checks, then read its **Not a violation** list before writing anything down.
-5. **Do a cross-screen pass.** Violations that span screens are a documented blind spot — each screen looks fine alone. Check the set: the same concept named differently in two places, a control that changes meaning between views, inconsistent primary-action treatment, a value shown on one screen and required on another, a style that only collides when two components meet. Nothing in a per-screen sweep will surface these.
+5. **Do a cross-screen pass.** This is the most robustly documented blind spot in the whole literature, agreed by every study that measured it: models found 43% and 50% of cross-screen violations where human panels found 86% and 83%. Each screen looks fine alone, so a per-screen sweep cannot surface these by construction. Check the set deliberately: the same concept named differently in two places, a control that changes meaning between views, inconsistent primary-action treatment, a value shown on one screen and required on another, a style that only collides when two components meet. Note that nearly all such misses fall under consistency — so if you take one thing from this step, compare naming and control behaviour across every screen. When you have screenshots, put them in navigation order and say so; sequence is what makes these visible.
 6. **Verify each suspected violation** against the exact element. If you cannot cite it, move it to **Suspected — unverified** with the check that would settle it; don't discard it silently.
 7. **Classify by severity, then rank strictly:**
    - **Critical** — blocks or loses the user (destructive action indistinguishable from a safe one; flow abandons under Choice Overload).
    - **Major** — measurably slower/harder (no progress indicator on a 5-step flow; Hick's overload on the primary path).
    - **Minor** — friction or polish (label not click-associated; suboptimal button order).
-8. **Cluster by root cause.** Three symptoms of one missing grouping = one finding with three effects, not three findings.
+8. **Aggregate, then cluster by root cause.** First merge the duplicates your per-lens and per-screen passes inevitably produced. Then cluster what remains: three symptoms of one missing grouping = one finding with three effects, not three findings.
 
 ## Deliverable
 
@@ -133,8 +145,11 @@ The selection and grouping of these particular 30 as a working set follows **[La
 
 The LLM-auditor guidance in this file is drawn from published evaluations of machine-generated usability critique. **These studies were run on the model generations available at the time of writing; the reported failure modes have been consistent across them, but treat specific numbers as historical rather than as current performance.**
 
-- Lubos, Felfernig, Garber, Le & Henrich, *Recommending Usability Improvements with Multimodal Large Language Models* (ACM FSE 2026) — [arXiv:2604.25420](https://arxiv.org/abs/2604.25420). Source of the four failure modes: non-existent issues, insufficiently specific recommendations, missed existing functionality, and tied severity ratings.
-- *Does GenAI Make Usability Testing Obsolete?* — [arXiv:2411.00634](https://arxiv.org/abs/2411.00634). Source of the precision 0.61–0.66 / recall 0.35–0.38 figures for source-code-based evaluation, and of the observation that code inspection reaches rare user paths that user testing does not.
-- *Synthetic Heuristic Evaluation: A Comparison between AI- and Human-Powered Usability Evaluation* — [arXiv:2507.02306](https://arxiv.org/abs/2507.02306). Source of the multimodal 73–77% versus 57–63% comparison, and of the cross-screen and design-convention blind spots.
+- Lubos, Felfernig, Garber, Le & Henrich, *Recommending Usability Improvements with Multimodal Large Language Models* (ACM FSE 2026) — [arXiv:2604.25420](https://arxiv.org/abs/2604.25420). Ran `gemini-2.0-flash-001` at temperature 0 over MP4 screen recordings sampled at 1 fps. Source of the specificity, context-awareness and preventive-fix findings, of the severity-tie result that motivates relative ordering, and of the per-heuristic evaluation and aggregation steps.
+- Ebrahimi Pourasad & Maalej, *Does GenAI Make Usability Testing Obsolete?* (ICSE 2025) — [arXiv:2411.00634](https://arxiv.org/abs/2411.00634). Ran GPT-4 Turbo with Vision over app context **plus source code plus a screenshot** — not code alone. Source of precision 0.61–0.66 and recall 0.35–0.38, where that spread is across two expert graders scoring the same output (their agreement was only moderate, κ = 0.53), and the authors ask that recall be read as indicative since it is measured conservatively against the union of two other methods. Also the source of the rare-user-path advantage and of the one-view-at-a-time explanation for cross-screen misses.
+- Zhong, McDonald & Hsieh, *Synthetic Heuristic Evaluation: A Comparison between AI- and Human-Powered Usability Evaluation* — [arXiv:2507.02306](https://arxiv.org/abs/2507.02306). Ran GPT-4 (with Gemini 1.5 Pro and Claude 3.5 Sonnet as comparisons) over 3–9 static screenshots per task, March–June 2024. Source of the 73–77% coverage against 55–63% for panels of five recruited freelance UX designers (five per app, ten in total), the cross-screen figures, the duplicate counts, the severity-0 noise proportion, the praise-by-default behaviour, the split-the-heuristics finding, and the attentional-decay comparison.
 - Wang et al., *UXBench: Measuring the Actionability of LLM-Generated UX Critiques* — [arXiv:2606.16262](https://arxiv.org/abs/2606.16262). Source of the repair-lift framing behind the actionability test.
 - Ahmed & Imran, *The role of large language models in UI/UX design: A systematic literature review* — [arXiv:2507.04469](https://arxiv.org/abs/2507.04469).
+- Guerino, Rodrigues, Capeleti, Mello, Freire & Zaina, *Can GPT-4o evaluate usability like human experts? A comparative study on issue identification in heuristic evaluation* (INTERACT 2025, pp. 381–402). The original source, on GPT-4o, for the finding that models identify issues with severity comparable to humans while also reporting issues that do not exist.
+
+Nielsen's evaluator-coverage baselines (a single evaluator finding 20–50% of issues, three to five specialists 74–87%) are from the Nielsen Norman Group's published guidance on heuristic evaluation.
