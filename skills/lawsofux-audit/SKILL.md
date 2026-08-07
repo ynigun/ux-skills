@@ -34,6 +34,29 @@ Three further constraints that come from what you actually are:
 - **You cannot measure.** No timings, no eye-tracking, no funnel analytics. Never write "users abandon at step 3" or "this takes 2 seconds." Report the missing mechanism, not an invented metric.
 - **You pattern-match.** A screen that resembles one with a known problem is not a screen with that problem. Open it.
 
+### Your real problem is recall, not precision
+
+Everything above guards against false findings. But the measured weakness of code-based LLM usability evaluation is the opposite one: in a controlled study, an LLM inspecting app source reached precision of 0.61–0.66 and **recall of only 0.35–0.38** — it was right about most of what it reported, and missed roughly two-thirds of the real issues.
+
+So the guards must not collapse into timidity. A report with three impeccable findings and thirty misses is a failed audit.
+
+- **Sweep every lens explicitly.** Don't stop when you have "enough." The long tail is where the value is.
+- **Don't silently drop what you couldn't verify.** Uncertain items go in a separate **Suspected — unverified** list with what you'd need to confirm them. That preserves recall without contaminating the confirmed findings.
+- **Run the lenses as separate passes** rather than judging all 30 in one sweep. Depth per lens beats one shallow pass over everything.
+- **Say what you didn't cover.** A named gap is recoverable; a silent one isn't.
+
+### What your evidence base can and cannot yield
+
+Yield varies sharply with what you were given. State which case you're in, and don't promise findings the evidence can't support:
+
+| Evidence | Strong at | Weak at |
+|---|---|---|
+| **Source code only** | Logic, state, validation, data flow, reversibility, rare paths that user testing never reaches — this is the genuine advantage of code inspection over user testing | Anything visual: layout, spacing, emphasis, whether the rendering actually reads |
+| **Screenshots / rendered UI** | Layout and visual grouping — multimodal heuristic evaluation has been measured *above* individual human evaluators (73–77% of known issues versus 57–63% for experienced evaluators) | Recognising unfamiliar UI components and design conventions; **violations that span screens** |
+| **Both, or a live page** | Everything above | Still cross-screen consistency unless you look for it deliberately |
+
+**Ask for screenshots or a running page if you don't have them.** It changes what you can find, and it's cheaper than guessing.
+
 ## The lenses (one file per principle)
 
 Walk the feature through all four groups. Most principles won't apply to a given screen — that's expected. Open the file for any you suspect.
@@ -59,12 +82,13 @@ The lenses with the highest ratio of provable findings to guesswork are [Mental 
 2. **State your evidence base.** Code only? Screenshots? A live page? Write it down — it bounds which lenses can produce findings at all.
 3. **Read the real artifact.** Central CSS + the component markup, or the rendered screenshot. Note what's actually there (groupings, confirm dialogs, focus states, soft deletes) so you don't flag handled cases.
 4. **Sweep all four groups.** For each principle you suspect, open its file, run its **Verify it from the code** checks, then read its **Not a violation** list before writing anything down.
-5. **Verify each suspected violation** against the exact element. If you cannot cite it, drop it.
-6. **Classify by severity, then rank strictly:**
+5. **Do a cross-screen pass.** Violations that span screens are a documented blind spot — each screen looks fine alone. Check the set: the same concept named differently in two places, a control that changes meaning between views, inconsistent primary-action treatment, a value shown on one screen and required on another, a style that only collides when two components meet. Nothing in a per-screen sweep will surface these.
+6. **Verify each suspected violation** against the exact element. If you cannot cite it, move it to **Suspected — unverified** with the check that would settle it; don't discard it silently.
+7. **Classify by severity, then rank strictly:**
    - **Critical** — blocks or loses the user (destructive action indistinguishable from a safe one; flow abandons under Choice Overload).
    - **Major** — measurably slower/harder (no progress indicator on a 5-step flow; Hick's overload on the primary path).
    - **Minor** — friction or polish (label not click-associated; suboptimal button order).
-7. **Cluster by root cause.** Three symptoms of one missing grouping = one finding with three effects, not three findings.
+8. **Cluster by root cause.** Three symptoms of one missing grouping = one finding with three effects, not three findings.
 
 ## Deliverable
 
@@ -75,7 +99,20 @@ For each finding:
 - **User cost** — the concrete behavior it produces (slower, misclick, abandonment, lost work)
 - **Fix** — smallest change that removes the cost. Prefer *preventive* designs over corrective ones where both are available: disabling invalid choices beats validating them after entry.
 
-End with the 2–3 highest-leverage fixes called out, and a short **"not assessed"** list — lenses you could not evaluate given your evidence base. Stating the gap is worth more than padding the report.
+Then two closing sections that are not optional:
+
+- **Suspected — unverified.** Everything you couldn't confirm, each with the one check that would settle it. This is how the report keeps recall without inflating the confirmed list.
+- **Not assessed.** Lenses your evidence base couldn't support, and what you'd need. Stating the gap is worth more than padding the report.
+
+End with the 2–3 highest-leverage fixes called out.
+
+### The actionability test
+
+Benchmarks for machine-generated UX critique score a report by **repair lift** — whether an agent given only your report can actually improve the interface. Apply that test to every finding before you ship it:
+
+> Could someone who has never seen this screen open the file you named, find the element you named, and make the change you described — without asking you a question?
+
+If not, the finding isn't finished. Missing location, vague fix, or a cost stated as an adjective are the three usual reasons.
 
 ## Anti-patterns
 
@@ -92,6 +129,10 @@ The 30 principles collected here are long-standing findings from cognitive psych
 
 The selection and grouping of these particular 30 as a working set follows **[Laws of UX](https://lawsofux.com/) by Jon Yablonski**, which is an excellent reference and worth reading directly. All text in this skill — definitions, checks, examples, and guidance — is written by us. No text is reproduced from that site, and this skill is not affiliated with or endorsed by it.
 
-The LLM-auditor failure modes in this file are drawn from:
-- Lubos, Felfernig, Garber, Le & Henrich, *Recommending Usability Improvements with Multimodal Large Language Models* (ACM FSE 2026) — [arXiv:2604.25420](https://arxiv.org/abs/2604.25420)
-- Ahmed & Imran, *The role of large language models in UI/UX design: A systematic literature review* — [arXiv:2507.04469](https://arxiv.org/abs/2507.04469)
+The LLM-auditor guidance in this file is drawn from published evaluations of machine-generated usability critique:
+
+- Lubos, Felfernig, Garber, Le & Henrich, *Recommending Usability Improvements with Multimodal Large Language Models* (ACM FSE 2026) — [arXiv:2604.25420](https://arxiv.org/abs/2604.25420). Source of the four failure modes: non-existent issues, insufficiently specific recommendations, missed existing functionality, and tied severity ratings.
+- *Does GenAI Make Usability Testing Obsolete?* — [arXiv:2411.00634](https://arxiv.org/abs/2411.00634). Source of the precision 0.61–0.66 / recall 0.35–0.38 figures for source-code-based evaluation, and of the observation that code inspection reaches rare user paths that user testing does not.
+- *Synthetic Heuristic Evaluation: A Comparison between AI- and Human-Powered Usability Evaluation* — [arXiv:2507.02306](https://arxiv.org/abs/2507.02306). Source of the multimodal 73–77% versus 57–63% comparison, and of the cross-screen and design-convention blind spots.
+- Wang et al., *UXBench: Measuring the Actionability of LLM-Generated UX Critiques* — [arXiv:2606.16262](https://arxiv.org/abs/2606.16262). Source of the repair-lift framing behind the actionability test.
+- Ahmed & Imran, *The role of large language models in UI/UX design: A systematic literature review* — [arXiv:2507.04469](https://arxiv.org/abs/2507.04469).
