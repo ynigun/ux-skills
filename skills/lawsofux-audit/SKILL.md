@@ -38,6 +38,8 @@ Three further constraints that come from what you actually are:
 
 Everything above guards against false findings. But the measured weakness of code-based LLM usability evaluation is the opposite one: in a controlled study, an LLM inspecting app source reached precision of 0.61–0.66 and **recall of only 0.35–0.38** — it was right about most of what it reported, and missed roughly two-thirds of the real issues.
 
+> **On these numbers.** They come from studies run on earlier model generations, and capability has moved since. Treat the *direction* as the durable finding, not the decimals: recall has consistently been the weaker half, because missing an issue requires no confidence while inventing one requires overconfidence. If your own model is better than this, the discipline costs you little; if it isn't, the discipline is what saves the report. Don't cite these figures as current performance.
+
 So the guards must not collapse into timidity. A report with three impeccable findings and thirty misses is a failed audit.
 
 - **Sweep every lens explicitly.** Don't stop when you have "enough." The long tail is where the value is.
@@ -52,7 +54,7 @@ Yield varies sharply with what you were given. State which case you're in, and d
 | Evidence | Strong at | Weak at |
 |---|---|---|
 | **Source code only** | Logic, state, validation, data flow, reversibility, rare paths that user testing never reaches — this is the genuine advantage of code inspection over user testing | Anything visual: layout, spacing, emphasis, whether the rendering actually reads |
-| **Screenshots / rendered UI** | Layout and visual grouping — multimodal heuristic evaluation has been measured *above* individual human evaluators (73–77% of known issues versus 57–63% for experienced evaluators) | Recognising unfamiliar UI components and design conventions; **violations that span screens** |
+| **Screenshots / rendered UI** | Layout and visual grouping — multimodal heuristic evaluation has been measured *above* individual human evaluators (73–77% of known issues versus 57–63% for experienced evaluators, on the model generation tested) | Recognising unfamiliar UI components and design conventions; **violations that span screens** |
 | **Both, or a live page** | Everything above | Still cross-screen consistency unless you look for it deliberately |
 
 **Ask for screenshots or a running page if you don't have them.** It changes what you can find, and it's cheaper than guessing.
@@ -129,7 +131,7 @@ The 30 principles collected here are long-standing findings from cognitive psych
 
 The selection and grouping of these particular 30 as a working set follows **[Laws of UX](https://lawsofux.com/) by Jon Yablonski**, which is an excellent reference and worth reading directly. All text in this skill — definitions, checks, examples, and guidance — is written by us. No text is reproduced from that site, and this skill is not affiliated with or endorsed by it.
 
-The LLM-auditor guidance in this file is drawn from published evaluations of machine-generated usability critique:
+The LLM-auditor guidance in this file is drawn from published evaluations of machine-generated usability critique. **These studies were run on the model generations available at the time of writing; the reported failure modes have been consistent across them, but treat specific numbers as historical rather than as current performance.**
 
 - Lubos, Felfernig, Garber, Le & Henrich, *Recommending Usability Improvements with Multimodal Large Language Models* (ACM FSE 2026) — [arXiv:2604.25420](https://arxiv.org/abs/2604.25420). Source of the four failure modes: non-existent issues, insufficiently specific recommendations, missed existing functionality, and tied severity ratings.
 - *Does GenAI Make Usability Testing Obsolete?* — [arXiv:2411.00634](https://arxiv.org/abs/2411.00634). Source of the precision 0.61–0.66 / recall 0.35–0.38 figures for source-code-based evaluation, and of the observation that code inspection reaches rare user paths that user testing does not.
