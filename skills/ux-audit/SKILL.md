@@ -13,21 +13,32 @@ Systematic end-to-end audit methodology. Use when a user asks you to find UX bug
 
 **Verify every "critical" claim.** Before labeling anything a bug, open the code and confirm. Pattern-matching produces false criticals that destroy the user's trust in the whole report.
 
+## Working as an LLM auditor
+
+- **Cite or demote.** Every finding carries a `file:line`. One that names no location cannot be acted on, and that is the most common complaint from engineers receiving machine-generated reports.
+- **Search before declaring anything absent.** "No validation here" when the validator lives one file away is the characteristic false positive. Search several spellings and check the layer above. This matters most for soft deletes: look for `deleted_at`, a status field, a trash route or a restore endpoint before calling an action irreversible — that is the most common false Critical in this whole audit.
+- **Don't drop what you couldn't verify — demote it.** Unconfirmed items go to a **Suspected — unverified** list with the check that would settle each. Deleting them protects precision at the cost of recall you can't afford.
+- **Never invent measurements or feelings.** No timings, no abandonment rates, and no "users will find this confusing." Report the missing mechanism, not a number or an emotion you don't have.
+- **Finding nothing is a valid result.** As a codebase improves there is less to find, and the instinct is to manufacture findings to fill the report. A long list is a warning sign, not coverage.
+- **Say what you didn't cover.** Close with a **Not assessed** list. A named gap is recoverable; a silent one isn't.
+
+Background and sources: [`research-notes.md`](../ux-heuristics-audit/references/research-notes.md).
+
 ## Method: three layers
 
 Every object in the feature gets examined through all three layers. If you only do one, you miss most of the bugs.
 
 ### 1. OOUX (Object-Oriented UX)
 
-For each domain object (e.g. Email, Draft, Thread, Rule), fill in:
+For each domain object in the feature — whatever the product's nouns are — fill in:
 
 | Object | CTAs | States | Relationships |
 |--------|------|--------|---------------|
-| Email  | archive, star, delete, convert, forward, reply, mark-read/unread | new, read, archived, converted, deleted | belongs-to Thread, has-many Attachments |
+| Order  | place, pay, ship, cancel, refund, archive | draft, placed, paid, shipped, cancelled, refunded | belongs-to Customer, has-many LineItems |
 
 Then sweep:
 - Every (state × CTA) cell — is the action valid in that state? Is it blocked in the UI?
-- Every state — is there a path back? (**Terminal states are the #1 trap** — "Converted" with no unconvert, "Deleted" with no restore.)
+- Every state — is there a path back? (**Terminal states are the #1 trap** — a "Cancelled" with no reinstate, a "Deleted" with no restore.)
 - Every relationship — does deleting A leave orphan Bs? Does archiving the parent hide children it shouldn't?
 
 ### 2. Lifecycle Trace
@@ -40,7 +51,7 @@ Follow each *attribute* of each object from the moment it's written to every pla
 - **Display**: where does the value land in the DOM? Is it escaped/sanitized? Does it get re-parsed client-side?
 - **Terminal fates**: is the row ever hard-deleted? Soft-deleted? Archived? Can it come back?
 
-This layer catches: partial commits, orphan rows, stale reads, silent truncation (e.g. `LEFT(body_text, 200)`), timezone drift, JSON-array-stringified-as-string bugs.
+This layer catches: partial commits, orphan rows, stale reads, silent truncation (a `LEFT(col, n)` in a list query that the detail view doesn't apply), timezone drift, JSON-array-stringified-as-string bugs.
 
 ### 3. Visual Contract
 
@@ -61,8 +72,8 @@ Sweep:
 4. **Enumerate reverse actions.** For every destructive/terminal action, is there an inverse? If not, that's a Critical.
 5. **Check races.** For every `await` inside a state mutator: if the user triggers another call before this resolves, what wins? Rapid-click A then B, throttle to Slow 3G.
 6. **Classify by severity**:
-   - **Critical** = feature is broken or user loses work (black box body, no restore from trash, silent data loss)
-   - **Major** = flow works but confuses users (wrong prefix language, no delivery badge, no loading state)
+   - **Critical** = feature is broken or the user loses work (content renders unreadable, no restore from trash, silent data loss)
+   - **Major** = flow works but confuses users (no loading state, no confirmation of a completed action, wrong language on generated text)
    - **Minor** = cosmetic or tiny edge (placeholder off by one, icon slightly misaligned)
    Verify every Critical by opening the exact line of code before labeling.
 
@@ -84,26 +95,21 @@ A report, ordered by severity, with for each finding:
 
 Cluster findings that share a root cause. If three symptoms are all the same `.prose pre` cascade bug, that's one Critical with three visible effects — not three Criticals.
 
-## Svelte 5 specific traps (when applicable)
+## What experience says to check first
 
-- **Module-level `$state` in `.svelte.ts` stores** — SSR pollution: any server-side import leaks state between users. Use `setContext/getContext` instead.
-- **`await` inside state mutators** — no staleness guard means rapid click A→B resolves A last, state wins for A. Gate every post-await write with `if (currentId !== startedId) return`.
-- **`onMount(() => { if (reactiveValue) ... })`** — runs once with whatever value reactiveValue had at mount, not reactively. Use `$effect` to re-run when the value changes.
-- **Debounce timers** — every cancellation path must clear the timer. Folder switch? Route leave? Form reset? If you only cleared it in one place, the other two leak.
-- **Long-lived polls** — every caller that starts the poll must be able to stop it, and the counter must be refcounted or the first caller "owns" it forever.
+- **Terminal states are the #1 source of Critical bugs.** Every state a record can enter and not leave — cancelled, archived, deleted, converted — needs a reverse, or an explicit reason why it has none.
+- **The cascade outranks component styles.** A rule in the central stylesheet targeting a generic tag silently clobbers carefully scoped component styles. Read the central stylesheet before claiming any visual bug.
+- **"The backend enforces it" is not "the UI prevents it."** A rule enforced only server-side reaches the user as an error they could not have anticipated. Check that invalid combinations are unreachable in the UI.
+- **One root cause commonly produces three "Critical" symptoms.** Cluster before counting, or the report overstates its own severity.
 
-## Backend specific traps (when applicable)
+## Stack-specific references
 
-- **Partial-commit windows** — any flow that writes to two tables without a transaction can leave one updated and the other not. Wrap in `tx.Begin`/`tx.Commit`/`tx.Rollback`.
-- **Silent error swallowing** — `if err != nil { return }` with no log. Every error path on the write side should log before returning so debugging is possible.
-- **Path-param encoding** — chi/mux/etc. don't URL-decode path params. Message-IDs, thread-IDs, emails-in-URLs all need `url.PathUnescape`.
-- **JSON-array-as-string** — when a header value is `map[string]string` but the provider sends arrays, you get literal `["<id1>","<id2>"]` as the value. Sanitize before parsing.
-- **Soft delete filters** — once you add `is_deleted`, every SELECT needs `WHERE is_deleted = FALSE`. Miss one and deleted rows ghost back into random lists.
+Open only the one that matches the project:
 
-## Lessons from past audits
+- [Svelte 5 traps](references/svelte-5.md)
+- [Server-side traps](references/backend-web.md)
 
-- **Terminal states are the #1 source of Critical bugs.** Every "converted", "archived", "deleted" state needs a reverse. Check first.
-- **CSS cascade ≥ component styles.** Generic-tag rules in app.css clobber carefully-scoped component styles. Check app.css first for any visual bug.
-- **"Already enforced by backend" doesn't mean "UI prevents it."** Check that the UI disallows invalid combinations — otherwise users hit confusing errors.
-- **One root cause can produce three "critical" symptoms.** Cluster before counting.
-- **Always read the central stylesheet before claiming a visual bug.** You will be embarrassed otherwise.
+## Reading the code systematically
+
+The sibling skill's [`reading-the-code.md`](../ux-heuristics-audit/references/reading-the-code.md) applies here in full: extract structure mechanically before judging, query the index instead of reading the codebase, follow dependency edges in both directions, find a working example and diff against it, and trace backward from symptom to source. The rule it opens with governs this audit too — **no finding without reading the code that produces it.**
+

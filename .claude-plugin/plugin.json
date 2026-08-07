@@ -1,0 +1,10 @@
+{
+  "name": "ux-skills",
+  "version": "1.0.0",
+  "description": "Three UX audit skills built for agents that read code: functional bug hunting, heuristic evaluation across 30 principles via an OOUX object map, and headless responsive-layout measurement.",
+  "author": { "name": "ynigun", "url": "https://github.com/ynigun" },
+  "license": "MIT",
+  "homepage": "https://github.com/ynigun/ux-skills",
+  "repository": "https://github.com/ynigun/ux-skills.git",
+  "keywords": ["ux", "usability", "audit", "heuristic-evaluation", "ooux", "accessibility", "rtl", "responsive"]
+}

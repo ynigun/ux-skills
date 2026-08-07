@@ -1,0 +1,21 @@
+{
+  "name": "ux-skills",
+  "owner": { "name": "ynigun" },
+  "metadata": {
+    "description": "UX audit skills for Claude Code.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ux-skills",
+      "description": "Three UX audit skills built for agents that read code: functional bug hunting, heuristic evaluation across 30 principles via an OOUX object map, and headless responsive-layout measurement.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/ux-audit",
+        "./skills/ux-heuristics-audit",
+        "./skills/auditing-responsive-layout"
+      ]
+    }
+  ]
+}
